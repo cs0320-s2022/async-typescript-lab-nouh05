@@ -1,21 +1,38 @@
 // TODO: select the list element where the suggestions should go, and all three dropdown elements
 //  HINT: look at the HTML
-
+const sunInput = document.querySelector('#sun') as HTMLInputElement
+const moonInput = document.querySelector('#moon') as HTMLInputElement
+const risingInput = document.querySelector('#rising') as HTMLInputElement
+const suggestionInput = document.querySelector('#suggestions') as HTMLInputElement
 // Here, when the value of sun is changed, we will call the method postAndUpdate.
 // TODO: Do the same for moon and rising
 
+sunInput.addEventListener("change", postAndUpdate);
+moonInput.addEventListener("change", postAndUpdate);
+risingInput.addEventListener("change", postAndUpdate);
+
 // TODO: Define a type for the request data object here.
-// type MatchesRequestData = {}
+type MatchesRequestData = {
+  sun: string;
+  moon: string;
+  rising: string
+}
 
 // TODO: Define a type for the response data object here.
-// type Matches = {}
+type Matches = {
+  matches: string[]
+}
 
 function postAndUpdate(): void {
   // TODO: empty the suggestionList (you want new suggestions each time someone types something new)
   //  HINT: use .innerHTML
+  suggestionInput.innerHTML = '';
 
   // TODO: add a type annotation to make this of type MatchesRequestData
   const postParameters = {
+    sun: sunInput.value,
+    moon: moonInput.value,
+    rising: risingInput.value
     // TODO: get the text inside the input box
     //  HINT: use sun.value to get the value of the sun field, for example
   };
@@ -27,6 +44,15 @@ function postAndUpdate(): void {
   //  Make sure you add "Access-Control-Allow-Origin":"*" to your headers.
   //  Remember to add a type annotation for the response data using the Matches type you defined above!
 
+  fetch("http://localhost:4567/matches", {
+    method: 'POST',
+    headers: {
+      'Access-Control-Allow-Origin': "*"
+    },
+    body: JSON.stringify(postParameters)
+  })
+      .then(response => response.json())
+      .then((data: Matches) => {updateSuggestions(data.matches)})
   // TODO: Call and fill in the updateSuggestions method in one of the .then statements in the Promise
   //  Parse the JSON in the response object
   //  HINT: remember to get the specific field in the JSON you want to use
@@ -38,20 +64,33 @@ function updateSuggestions(matches: string[]): void {
   //  NOTE: you should use <li> (list item) tags to wrap each element. When you do so,
   //  make sure to add the attribute 'tabindex="0"' (for example: <li tabindex="0">{your element}</li>).
   //  This makes each element selectable via screen reader.
+  for(const m of matches){
+    suggestionInput.innerHTML += '<li tabindex="0">' + m + '</li>'
+  }
 }
-
+const mV:MatchesRequestData = {
+  sun: "Capricorn",
+  moon: "Cancer",
+  rising: "Virgo"
+}
 // TODO: create an event listener to the document (document.addEventListener) that detects "keyup".
 //  When a certain key of your choice is clicked, reset the values of sun, moon, and rising to your own
 //  values for the sun, moon, and rising using updateValues. Then call postAndUpdate().
 //  HINT: the listener callback function should be asynchronous and wait until the values are
 //  updated before calling postAndUpdate().
 
+document.addEventListener("keyup", event => {
+  if(event.key === "Enter") {
+    updateValues(mV.sun, mV.moon, mV.rising).then(res => postAndUpdate())
+  }
+})
+
 async function updateValues(sunval: string, moonval: string, risingval: string): Promise<void>{
   // This line asynchronously waits 1 second before updating the values.
   // It's unnecessary here, but it simulates asynchronous behavior you often have to account for.
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  sun.value = sunval;
-  moon.value = moonval;
-  rising.value = risingval;
+  sunInput.value = sunval;
+  moonInput.value = moonval;
+  risingInput.value = risingval;
 }
